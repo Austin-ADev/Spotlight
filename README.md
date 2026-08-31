@@ -1,20 +1,3 @@
-/*
- * Copyright (C) 2026 Austin ADev
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */   
-
 # Spotlight Launcher
 
 A lightweight, fast, and modern Spotlight-style application launcher for Linux, built with **C++20** and **Qt 6**. Inspired by macOS Spotlight, it provides instant access to file searching, custom commands, app launching, Godot project management, and a high-performance math engine.
@@ -49,10 +32,9 @@ A lightweight, fast, and modern Spotlight-style application launcher for Linux, 
 
 | Shortcut | Action |
 | :--- | :--- |
-| **`Esc`** | Hide the Spotlight window |
+| **`Esc`** | Hide / Close the Spotlight window |
 | **`Down Arrow`** | Move focus from search bar to result list |
 | **`Enter / Return`** | Activate/Launch selected item |
-| **`ESC`** | Close Spotlight |
 
 ---
 
@@ -63,9 +45,16 @@ A lightweight, fast, and modern Spotlight-style application launcher for Linux, 
 Ensure you have the following installed on your system:
 * **C++ Compiler**: GCC or Clang supporting C++17/C++20
 * **Build System**: CMake (v3.16+) & Ninja/Make
-* **Qt 6 Framework**: `Qt6::Widgets`, `Qt6::Network` (**OR** Qt Creator)
+* **Qt 6 Framework**: `Qt6::Widgets`, `Qt6::Network` (or Qt Creator)
 
 On Ubuntu/Debian-based systems:
 ```bash
 sudo apt update
 sudo apt install build-essential cmake qt6-base-dev
+```
+
+## License
+
+Copyright (C) 2026 Austin ADev
+
+This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
