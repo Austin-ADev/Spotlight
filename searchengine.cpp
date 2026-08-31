@@ -1,5 +1,7 @@
 #include "searchengine.h"
 #include "settingsdialog.h"
+#include "styles.h"
+#include <QApplication>
 #include <QProcess>
 #include <QStandardPaths>
 #include <QDesktopServices>
@@ -180,14 +182,12 @@ QStringList SearchEngine::handleCommands(const QString &query) {
         return results;
     }
 
-    // 1. Search core internal commands
     for (const auto &cmd : coreCommands) {
         if (cmd.trigger.contains(query, Qt::CaseInsensitive)) {
             results << cmd.displayText;
         }
     }
 
-    // 2. Search dynamically indexed apps (from .desktop files and Flatpaks) if enabled
     QSettings configSettings("SpotlightApp", "Config");
     bool searchCmds = configSettings.value("searchCommands", true).toBool();
 
@@ -200,7 +200,6 @@ QStringList SearchEngine::handleCommands(const QString &query) {
         }
     }
 
-    // 3. Search custom mapped commands from settings
     QSettings settings("SpotlightApp", "Commands");
     settings.beginGroup("CustomCommands");
     QStringList keys = settings.childKeys();
@@ -213,7 +212,6 @@ QStringList SearchEngine::handleCommands(const QString &query) {
     }
     settings.endGroup();
 
-    // 4. Fallback shell command option
     results << "Run command: " + query;
 
     return results;
@@ -279,7 +277,6 @@ void SearchEngine::executeAction(const QString &selectedResult) {
     else if (selectedResult == "Action: Turn Wi-Fi On") {
         toggleWifi(true);
     }
-    // Execute indexed application (.desktop or Flatpak)
     else if (selectedResult.startsWith("App: ")) {
         int startExec = selectedResult.indexOf("(");
         int endExec = selectedResult.lastIndexOf(")");
@@ -288,7 +285,6 @@ void SearchEngine::executeAction(const QString &selectedResult) {
             QProcess::startDetached("sh", QStringList() << "-c" << execCmd);
         }
     }
-    // Custom mapped shortcuts
     else if (selectedResult.startsWith("Custom Action [")) {
         int splitIdx = selectedResult.indexOf("]: ");
         if (splitIdx != -1) {
@@ -296,7 +292,6 @@ void SearchEngine::executeAction(const QString &selectedResult) {
             QProcess::startDetached("sh", QStringList() << "-c" << cmd);
         }
     }
-    // Open Godot projects (with host filesystem permissions for Flatpak)
     else if (selectedResult.startsWith("Godot Project: ")) {
         int startPath = selectedResult.indexOf("(");
         int endPath = selectedResult.lastIndexOf(")");
@@ -321,12 +316,10 @@ void SearchEngine::executeAction(const QString &selectedResult) {
     else if (selectedResult == "Godot: Open Main Projects Directory") {
         openFile(QStandardPaths::writableLocation(QStandardPaths::HomeLocation));
     }
-    // Fallback shell execution
     else if (selectedResult.startsWith("Run command: ")) {
         QString cmd = selectedResult.mid(13);
         QProcess::startDetached("sh", QStringList() << "-c" << cmd);
     }
-    // Open indexed files or folders
     else if (selectedResult.startsWith("File: ")) {
         openFile(selectedResult.mid(6));
     }
@@ -336,7 +329,12 @@ void SearchEngine::openSettingsWindow() {
     SettingsDialog *dialog = new SettingsDialog();
     dialog->setAttribute(Qt::WA_DeleteOnClose);
     dialog->connectIndexerSignals(&m_indexer);
+
     connect(dialog, &SettingsDialog::triggerReindex, this, &SearchEngine::refreshIndex);
+    connect(dialog, &SettingsDialog::themeChanged, [](const QString &themeName) {
+        qApp->setStyleSheet(ThemeManager::getStyleSheet(themeName));
+    });
+
     dialog->show();
 }
 

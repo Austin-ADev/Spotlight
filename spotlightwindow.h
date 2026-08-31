@@ -2,12 +2,12 @@
 #define SPOTLIGHTWINDOW_H
 
 #include <QWidget>
-#include <QFrame>
 #include <QLineEdit>
 #include <QListView>
-#include <QVBoxLayout>
-#include <QKeyEvent>
 #include <QStringListModel>
+#include <QVBoxLayout>
+#include <QFrame>
+#include <QKeyEvent>
 #include "searchengine.h"
 
 class SpotlightWindow : public QWidget {
@@ -17,6 +17,9 @@ public:
     explicit SpotlightWindow(QWidget *parent = nullptr);
     void toggleVisibility();
 
+public slots:
+    void setTheme(const QString &themeName);
+
 protected:
     void keyPressEvent(QKeyEvent *event) override;
 
@@ -25,16 +28,16 @@ private slots:
     void onResultActivated(const QModelIndex &index);
 
 private:
+    void centerOnScreen();
+
+    QVBoxLayout *outerLayout;
     QFrame *containerFrame;
+    QVBoxLayout *innerLayout;
     QLineEdit *searchBar;
     QListView *resultsList;
-    QVBoxLayout *outerLayout;
-    QVBoxLayout *innerLayout;
     QStringListModel *resultsModel;
 
     SearchEngine searchEngine;
-
-    void centerOnScreen();
 };
 
 #endif // SPOTLIGHTWINDOW_H

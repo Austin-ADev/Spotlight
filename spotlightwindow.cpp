@@ -1,11 +1,13 @@
 #include "spotlightwindow.h"
+#include "styles.h"
 #include <QGuiApplication>
 #include <QScreen>
+#include <QSettings>
 
 SpotlightWindow::SpotlightWindow(QWidget *parent)
     : QWidget(parent), searchEngine(this)
 {
-    // Make window borderless, floating, and hidden from the taskbar
+    // Make window borderless, floating, and hidden from taskbar
     setWindowFlags(Qt::FramelessWindowHint | Qt::Tool | Qt::WindowStaysOnTopHint);
     setAttribute(Qt::WA_TranslucentBackground);
 
@@ -42,61 +44,14 @@ SpotlightWindow::SpotlightWindow(QWidget *parent)
 
     innerLayout->addWidget(resultsList);
 
-    // Styling to match dark slate look
-    setStyleSheet(
-        "#ContainerFrame {"
-        "  background-color: #1A1A1E;"
-        "  border: 1px solid #2E2E35;"
-        "  border-radius: 30px;"
-        "}"
-        "QLineEdit {"
-        "  background-color: transparent;"
-        "  border: none;"
-        "  color: #FFFFFF;"
-        "  font-size: 18px;"
-        "  padding: 0px 4px;"
-        "  selection-background-color: #3B82F6;"
-        "}"
-        "QLineEdit::placeholder {"
-        "  color: #6B7280;"
-        "}"
-        "QListView {"
-        "  background-color: transparent;"
-        "  border: none;"
-        "  color: #E5E7EB;"
-        "  font-size: 15px;"
-        "  outline: none;"
-        "}"
-        "QListView::item {"
-        "  padding: 10px 12px;"
-        "  border-radius: 8px;"
-        "}"
-        "QListView::item:hover {"
-        "  background-color: #27272A;"
-        "}"
-        "QListView::item:selected {"
-        "  background-color: #3F3F46;"
-        "  color: #FFFFFF;"
-        "}"
-        "QScrollBar:vertical {"
-        "  background: transparent;"
-        "  width: 8px;"
-        "  margin: 0px;"
-        "}"
-        "QScrollBar::handle:vertical {"
-        "  background: #3F3F46;"
-        "  border-radius: 4px;"
-        "  min-height: 20px;"
-        "}"
-        "QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {"
-        "  height: 0px;"
-        "}"
-        );
+    // Load dynamic theme stylesheet from QSettings
+    QSettings configSettings("SpotlightApp", "Config");
+    QString savedTheme = configSettings.value("theme", "Dark").toString();
+    setTheme(savedTheme);
 
     // Connect text updates and result selections
     connect(searchBar, &QLineEdit::textChanged, this, &SpotlightWindow::onSearchTextChanged);
     connect(searchBar, &QLineEdit::returnPressed, this, [this]() {
-        // Execute top item if Enter is pressed inside the search bar
         QModelIndex topIndex = resultsModel->index(0, 0);
         if (topIndex.isValid()) {
             onResultActivated(topIndex);
@@ -105,6 +60,10 @@ SpotlightWindow::SpotlightWindow(QWidget *parent)
     connect(resultsList, &QListView::activated, this, &SpotlightWindow::onResultActivated);
 
     adjustSize();
+}
+
+void SpotlightWindow::setTheme(const QString &themeName) {
+    setStyleSheet(ThemeManager::getStyleSheet(themeName));
 }
 
 void SpotlightWindow::toggleVisibility() {
@@ -138,7 +97,6 @@ void SpotlightWindow::keyPressEvent(QKeyEvent *event) {
     if (event->key() == Qt::Key_Escape) {
         hide();
     } else if (event->key() == Qt::Key_Down && resultsList->isVisible()) {
-        // Allow Arrow Down to move focus into the list
         resultsList->setFocus();
         resultsList->setCurrentIndex(resultsModel->index(0, 0));
     } else {
@@ -150,7 +108,6 @@ void SpotlightWindow::onSearchTextChanged(const QString &text) {
     if (text.trimmed().isEmpty()) {
         resultsList->hide();
     } else {
-        // Fetch prefix-filtered list from SearchEngine
         QStringList results = searchEngine.getResults(text);
         resultsModel->setStringList(results);
 
@@ -167,9 +124,7 @@ void SpotlightWindow::onSearchTextChanged(const QString &text) {
 void SpotlightWindow::onResultActivated(const QModelIndex &index) {
     QString selectedResult = resultsModel->data(index, Qt::DisplayRole).toString();
 
-    // Send selected string back to SearchEngine to execute actions
     searchEngine.executeAction(selectedResult);
 
-    // Automatically hide Spotlight overlay after execution
     hide();
 }

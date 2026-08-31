@@ -14,6 +14,7 @@ qt_add_executable(Spotlight
     settingsdialog.h settingsdialog.cpp
     Spotlight.md
     fileindexer.h fileindexer.cpp
+    styles.h
 )
 
 target_link_libraries(Spotlight

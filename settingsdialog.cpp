@@ -1,49 +1,84 @@
 #include "settingsdialog.h"
 #include "fileindexer.h"
+#include "styles.h"
 #include <QSettings>
 #include <QCoreApplication>
 #include <QStyle>
+#include <QVBoxLayout>
+#include <QHBoxLayout>
 
 SettingsDialog::SettingsDialog(QWidget *parent)
     : QDialog(parent), m_isIndexing(false)
 {
     setWindowTitle("Spotlight Settings");
-    setFixedSize(380, 240);
+    setFixedSize(380, 320);
 
-    QVBoxLayout *layout = new QVBoxLayout(this);
+    QVBoxLayout *mainLayout = new QVBoxLayout(this);
 
-    // Settings options
-    QSettings settings("SpotlightApp", "Config");
-    bool searchCmds = settings.value("searchCommands", true).toBool();
+    // Top Navigation / Back Button
+    QHBoxLayout *topLayout = new QHBoxLayout();
+    m_backBtn = new QPushButton("← Back", this);
+    m_backBtn->setFixedWidth(80);
+    topLayout->addWidget(m_backBtn);
+    topLayout->addStretch();
+    mainLayout->addLayout(topLayout);
 
-    m_searchCommandsCheckBox = new QCheckBox("Include Applications & Commands in Search", this);
+    connect(m_backBtn, &QPushButton::clicked, this, &SettingsDialog::onBackClicked);
+
+    // Theme Selection Controls
+    QHBoxLayout *themeLayout = new QHBoxLayout();
+    QLabel *themeLabel = new QLabel("App Theme:", this);
+    m_themeComboBox = new QComboBox(this);
+    m_themeComboBox->addItems({"Dark", "Light"});
+
+    QSettings configSettings("SpotlightApp", "Config");
+    QString savedTheme = configSettings.value("theme", "Dark").toString();
+    m_themeComboBox->setCurrentText(savedTheme);
+
+    themeLayout->addWidget(themeLabel);
+    themeLayout->addWidget(m_themeComboBox);
+    mainLayout->addLayout(themeLayout);
+
+    connect(m_themeComboBox, &QComboBox::currentTextChanged, this, &SettingsDialog::onThemeComboChanged);
+
+    // Search Options
+    bool searchCmds = configSettings.value("searchCommands", true).toBool();
+    m_searchCommandsCheckBox = new QCheckBox("Include Applications & Commands", this);
     m_searchCommandsCheckBox->setChecked(searchCmds);
-    layout->addWidget(m_searchCommandsCheckBox);
+    mainLayout->addWidget(m_searchCommandsCheckBox);
 
     connect(m_searchCommandsCheckBox, &QCheckBox::toggled, this, &SettingsDialog::onSearchCommandsToggled);
 
     // Re-index Button
     m_reindexBtn = new QPushButton("Re-index Files & Applications", this);
-    layout->addWidget(m_reindexBtn);
+    mainLayout->addWidget(m_reindexBtn);
     connect(m_reindexBtn, &QPushButton::clicked, this, &SettingsDialog::onReindexClicked);
 
-    // Progress Bar
+    // Progress Bar & Status
     m_progressBar = new QProgressBar(this);
     m_progressBar->setRange(0, 100);
-    m_progressBar->setValue(0);
     m_progressBar->setVisible(false);
-    layout->addWidget(m_progressBar);
+    mainLayout->addWidget(m_progressBar);
 
-    // Status Label
     m_statusLabel = new QLabel("", this);
-    layout->addWidget(m_statusLabel);
+    mainLayout->addWidget(m_statusLabel);
 
-    // Setup Tray Icon for Background Notifications
+    // Setup Tray
     m_trayIcon = new QSystemTrayIcon(this);
     m_trayIcon->setIcon(style()->standardIcon(QStyle::SP_ComputerIcon));
     m_trayIcon->show();
 
-    setLayout(layout);
+    setLayout(mainLayout);
+}
+
+void SettingsDialog::onThemeComboChanged(const QString &themeName) {
+    QSettings configSettings("SpotlightApp", "Config");
+    configSettings.setValue("theme", themeName);
+    emit themeChanged(themeName);
+}
+
+void SettingsDialog::onBackClicked() {
+    this->close();
 }
 
 void SettingsDialog::connectIndexerSignals(FileIndexer *indexer) {
@@ -83,7 +118,6 @@ void SettingsDialog::onIndexingFinished(int totalFiles) {
     m_statusLabel->setText(QString("Indexing complete! (%1 items)").arg(totalFiles));
     m_reindexBtn->setEnabled(true);
 
-    // Send Desktop Notification
     if (QSystemTrayIcon::isSystemTrayAvailable()) {
         m_trayIcon->showMessage(
             "Spotlight Indexer",
@@ -93,7 +127,6 @@ void SettingsDialog::onIndexingFinished(int totalFiles) {
             );
     }
 
-    // Close application instances if running in background mode
     if (isHidden()) {
         QCoreApplication::quit();
     }

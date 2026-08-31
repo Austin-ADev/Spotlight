@@ -4,7 +4,7 @@
 #include <QDialog>
 #include <QPushButton>
 #include <QLabel>
-#include <QVBoxLayout>
+#include <QComboBox>
 #include <QCheckBox>
 #include <QProgressBar>
 #include <QSystemTrayIcon>
@@ -20,17 +20,22 @@ public:
 
 signals:
     void triggerReindex();
+    void themeChanged(const QString &newTheme);
 
 private slots:
     void onReindexClicked();
     void onSearchCommandsToggled(bool checked);
+    void onThemeComboChanged(const QString &themeName);
     void onIndexingStarted();
     void onIndexingProgress(int current, int total);
     void onIndexingFinished(int totalFiles);
+    void onBackClicked();
 
 private:
+    QPushButton *m_backBtn;
     QPushButton *m_reindexBtn;
     QCheckBox *m_searchCommandsCheckBox;
+    QComboBox *m_themeComboBox;
     QProgressBar *m_progressBar;
     QLabel *m_statusLabel;
     QSystemTrayIcon *m_trayIcon;
