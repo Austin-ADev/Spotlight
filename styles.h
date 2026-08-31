@@ -164,25 +164,30 @@ private:
             background: transparent;
         }
         #ContainerFrame {
+            /* Lighter, higher-transparency glass layer */
             background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                stop:0 rgba(52, 36, 16, 0.92),
-                stop:0.08 rgba(40, 28, 12, 0.90),
-                stop:0.5 rgba(26, 18, 8, 0.88),
-                stop:1 rgba(18, 12, 6, 0.92));
-            border: 1px solid rgba(245, 158, 11, 0.2);
-            border-top: 1px solid rgba(252, 211, 77, 0.35);
+                stop:0.0 rgba(255, 220, 150, 0.35),
+                stop:0.04 rgba(251, 191, 36, 0.15),
+                stop:0.25 rgba(30, 20, 10, 0.45),
+                stop:0.85 rgba(15, 10, 5, 0.60),
+                stop:1.0 rgba(255, 200, 100, 0.15));
+
+            /* Glass edge highlights (specular reflection) */
+            border: 1px solid rgba(245, 158, 11, 0.35);
+            border-top: 1.5px solid rgba(255, 245, 200, 0.85);
+            border-bottom: 1px solid rgba(245, 158, 11, 0.15);
             border-radius: 37px;
         }
         QLineEdit {
             background-color: transparent;
             border: none;
-            color: #fef3c7;
+            color: #fffbeb;
             font-size: 18px;
             padding: 0px 4px;
-            selection-background-color: rgba(245, 158, 11, 0.3);
+            selection-background-color: rgba(245, 158, 11, 0.4);
         }
         QLineEdit::placeholder {
-            color: #8a6a4a;
+            color: rgba(253, 230, 138, 0.6);
         }
         QListView {
             background-color: transparent;
@@ -196,11 +201,13 @@ private:
             border-radius: 8px;
         }
         QListView::item:hover {
-            background-color: rgba(245, 158, 11, 0.08);
+            background: rgba(245, 158, 11, 0.15);
+            border: 1px solid rgba(252, 211, 77, 0.3);
         }
         QListView::item:selected {
-            background-color: rgba(245, 158, 11, 0.15);
-            color: #fffbeb;
+            background: rgba(245, 158, 11, 0.3);
+            border: 1px solid rgba(254, 240, 138, 0.5);
+            color: #ffffff;
         }
         QScrollBar:vertical {
             background: transparent;
@@ -208,7 +215,7 @@ private:
             margin: 0px;
         }
         QScrollBar::handle:vertical {
-            background: rgba(245, 158, 11, 0.2);
+            background: rgba(245, 158, 11, 0.25);
             border-radius: 4px;
             min-height: 20px;
         }
