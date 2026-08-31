@@ -6,6 +6,7 @@
 #include <QStyle>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
+#include <QApplication>
 
 SettingsDialog::SettingsDialog(QWidget *parent)
     : QDialog(parent), m_isIndexing(false)
@@ -29,11 +30,14 @@ SettingsDialog::SettingsDialog(QWidget *parent)
     QHBoxLayout *themeLayout = new QHBoxLayout();
     QLabel *themeLabel = new QLabel("App Theme:", this);
     m_themeComboBox = new QComboBox(this);
-    m_themeComboBox->addItems({"Dark", "Light"});
+    m_themeComboBox->addItems({"Dark", "Light", "Amber"});
 
+    // 1. BLOCK SIGNALS while setting default value so it doesn't fire before signals are connected
+    m_themeComboBox->blockSignals(true);
     QSettings configSettings("SpotlightApp", "Config");
     QString savedTheme = configSettings.value("theme", "Dark").toString();
     m_themeComboBox->setCurrentText(savedTheme);
+    m_themeComboBox->blockSignals(false);
 
     themeLayout->addWidget(themeLabel);
     themeLayout->addWidget(m_themeComboBox);
@@ -74,6 +78,16 @@ SettingsDialog::SettingsDialog(QWidget *parent)
 void SettingsDialog::onThemeComboChanged(const QString &themeName) {
     QSettings configSettings("SpotlightApp", "Config");
     configSettings.setValue("theme", themeName);
+
+    // 2. Set globally and force unpolish/polish across the application
+    qApp->setStyleSheet(ThemeManager::getStyleSheet(themeName));
+
+    for (QWidget *widget : qApp->topLevelWidgets()) {
+        widget->style()->unpolish(widget);
+        widget->style()->polish(widget);
+        widget->update();
+    }
+
     emit themeChanged(themeName);
 }
 

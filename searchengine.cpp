@@ -1,3 +1,10 @@
+#define exprtk_disable_string_capabilities
+#define exprtk_disable_vector_io
+#define exprtk_disable_break_continue
+#define exprtk_disable_loop_statements
+#define exprtk_disable_conditional_statements
+
+#include "exprtk.hpp"
 #include "searchengine.h"
 #include "settingsdialog.h"
 #include "styles.h"
@@ -6,11 +13,11 @@
 #include <QStandardPaths>
 #include <QDesktopServices>
 #include <QUrl>
-#include <QStack>
 #include <QSettings>
 #include <QFileInfo>
 #include <QDir>
-#include <cmath>
+#include <QDebug>
+#include <string>
 
 SearchEngine::SearchEngine(QObject *parent)
     : QObject(parent)
@@ -27,100 +34,21 @@ void SearchEngine::refreshIndex() {
 }
 
 static bool evaluateExpression(const QString &expr, double &outResult) {
-    QString clean = expr;
-    clean.remove(' ');
-    if (clean.isEmpty()) return false;
+    std::string expression_string = expr.toStdString();
 
-    QVector<QString> tokens;
-    QString currentToken;
+    typedef exprtk::symbol_table<double> symbol_table_t;
+    typedef exprtk::expression<double>   expression_t;
+    typedef exprtk::parser<double>       parser_t;
 
-    for (int i = 0; i < clean.length(); ++i) {
-        QChar c = clean[i];
-        if (c.isDigit() || c == '.') {
-            currentToken += c;
-        } else if (QString("+-*/%^()").contains(c)) {
-            if (!currentToken.isEmpty()) {
-                tokens.append(currentToken);
-                currentToken.clear();
-            }
-            if (c == '-' && (tokens.isEmpty() || QString("+-*/%^(").contains(tokens.last()))) {
-                currentToken += c;
-            } else {
-                tokens.append(QString(c));
-            }
-        } else {
-            return false;
-        }
-    }
-    if (!currentToken.isEmpty()) {
-        tokens.append(currentToken);
-    }
+    symbol_table_t symbol_table;
+    symbol_table.add_constants(); // Adds pi, e, etc.
 
-    QStack<double> values;
-    QStack<QChar> ops;
+    expression_t expression;
+    expression.register_symbol_table(symbol_table);
 
-    auto precedence = [](QChar op) {
-        if (op == '+' || op == '-') return 1;
-        if (op == '*' || op == '/' || op == '%') return 2;
-        if (op == '^') return 3;
-        return 0;
-    };
-
-    auto applyOp = [](QChar op, double b, double a) -> double {
-        switch (op.toLatin1()) {
-        case '+': return a + b;
-        case '-': return a - b;
-        case '*': return a * b;
-        case '/': return (b != 0) ? a / b : 0;
-        case '%': return fmod(a, b);
-        case '^': return pow(a, b);
-        default: return 0;
-        }
-    };
-
-    for (int i = 0; i < tokens.size(); ++i) {
-        QString token = tokens[i];
-        bool isNumber = false;
-        double val = token.toDouble(&isNumber);
-
-        if (isNumber) {
-            values.push(val);
-        } else if (token == "(") {
-            ops.push('(');
-        } else if (token == ")") {
-            while (!ops.isEmpty() && ops.top() != '(') {
-                if (values.size() < 2) return false;
-                double val2 = values.pop();
-                double val1 = values.pop();
-                QChar op = ops.pop();
-                values.push(applyOp(op, val2, val1));
-            }
-            if (!ops.isEmpty()) ops.pop();
-        } else if (token.length() == 1 && QString("+-*/%^").contains(token[0])) {
-            QChar op = token[0];
-            while (!ops.isEmpty() && precedence(ops.top()) >= precedence(op)) {
-                if (values.size() < 2) return false;
-                double val2 = values.pop();
-                double val1 = values.pop();
-                QChar opTop = ops.pop();
-                values.push(applyOp(opTop, val2, val1));
-            }
-            ops.push(op);
-        } else {
-            return false;
-        }
-    }
-
-    while (!ops.isEmpty()) {
-        if (values.size() < 2) return false;
-        double val2 = values.pop();
-        double val1 = values.pop();
-        QChar op = ops.pop();
-        values.push(applyOp(op, val2, val1));
-    }
-
-    if (values.size() == 1) {
-        outResult = values.pop();
+    parser_t parser;
+    if (parser.compile(expression_string, expression)) {
+        outResult = expression.value();
         return true;
     }
 
@@ -147,13 +75,13 @@ QStringList SearchEngine::getResults(const QString &input) {
 QStringList SearchEngine::handleMath(const QString &query) {
     QStringList results;
     if (query.isEmpty()) {
-        results << "Math Mode: Type an expression (e.g. = 1+3*5)";
+        results << "Math Mode: Type an expression (e.g. = 1+3*5, = sin(0.5)*pi)";
         return results;
     }
 
     double resultValue = 0.0;
     if (evaluateExpression(query, resultValue)) {
-        results << "= " + query + "  ⟶  " + QString::number(resultValue);
+        results << "= " + query + "  ⟶  " + QString::number(resultValue, 'g', 10);
     } else {
         results << "= " + query + " ...";
     }
@@ -331,8 +259,14 @@ void SearchEngine::openSettingsWindow() {
     dialog->connectIndexerSignals(&m_indexer);
 
     connect(dialog, &SettingsDialog::triggerReindex, this, &SearchEngine::refreshIndex);
+
     connect(dialog, &SettingsDialog::themeChanged, [](const QString &themeName) {
-        qApp->setStyleSheet(ThemeManager::getStyleSheet(themeName));
+        QString qss = ThemeManager::getStyleSheet(themeName);
+        qDebug() << "Theme name received:" << themeName;
+        qDebug() << "Loaded stylesheet length:" << qss.length();
+        qDebug() << "Loaded stylesheet content:" << qss;
+
+        qApp->setStyleSheet(qss);
     });
 
     dialog->show();
