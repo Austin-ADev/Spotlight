@@ -19,16 +19,29 @@
 #define STYLES_H
 
 #include <QString>
+#include <QChar>
 
 class ThemeManager {
 public:
     static QString getStyleSheet(const QString &themeName) {
-        QString trimmedTheme = themeName.trimmed();
+        // Clean non-breaking spaces (\u00A0) and regular whitespace
+        QString trimmedTheme = themeName;
+        trimmedTheme.replace(QChar(0x00A0), ' ');
+        trimmedTheme = trimmedTheme.trimmed();
 
         if (trimmedTheme.compare("Light", Qt::CaseInsensitive) == 0) {
             return getLightStyle();
         } else if (trimmedTheme.compare("Amber", Qt::CaseInsensitive) == 0) {
             return getAmberStyle();
+        } else if (trimmedTheme.compare("Ocean", Qt::CaseInsensitive) == 0) {
+            return getOceanStyle();
+        } else if (trimmedTheme.compare("Rose", Qt::CaseInsensitive) == 0) {
+            return getRoseStyle();
+        } else if (trimmedTheme.compare("Midnight", Qt::CaseInsensitive) == 0) {
+            return getMidnightStyle();
+        } else if (trimmedTheme.compare("Forest", Qt::CaseInsensitive) == 0 ||
+                   trimmedTheme.compare("Forrest", Qt::CaseInsensitive) == 0) {
+            return getForestStyle();
         }
 
         return getDarkStyle(); // Default fallback
@@ -43,7 +56,7 @@ private:
             #ContainerFrame {
                 background-color: #1A1A1E;
                 border: 1px solid #2E2E35;
-                border-radius: 24px;
+                border-radius: 37px;
             }
             QLineEdit {
                 background-color: transparent;
@@ -98,7 +111,7 @@ private:
             #ContainerFrame {
                 background-color: #FFFFFF;
                 border: 1px solid #E5E7EB;
-                border-radius: 24px;
+                border-radius: 37px;
             }
             QLineEdit {
                 background-color: transparent;
@@ -151,57 +164,43 @@ private:
             background: transparent;
         }
         #ContainerFrame {
-            /* Glass gradient: Top-to-bottom light sheen down to translucent amber depth */
             background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                stop:0.0 rgba(255, 220, 130, 0.35),
-                stop:0.04 rgba(255, 191, 0, 0.22),
-                stop:0.25 rgba(45, 34, 12, 0.65),
-                stop:0.85 rgba(26, 20, 8, 0.75),
-                stop:1.0 rgba(18, 14, 6, 0.85));
-
-            /* Glass border: Bright top highlight mimicking light hitting the top bevel */
-            border: 1px solid rgba(255, 191, 0, 0.25);
-            border-top: 1px solid rgba(255, 235, 170, 0.60);
-            border-left: 1px solid rgba(255, 220, 130, 0.35);
+                stop:0 rgba(52, 36, 16, 0.92),
+                stop:0.08 rgba(40, 28, 12, 0.90),
+                stop:0.5 rgba(26, 18, 8, 0.88),
+                stop:1 rgba(18, 12, 6, 0.92));
+            border: 1px solid rgba(245, 158, 11, 0.2);
+            border-top: 1px solid rgba(252, 211, 77, 0.35);
             border-radius: 37px;
         }
         QLineEdit {
             background-color: transparent;
             border: none;
-            color: #fff3d0;
+            color: #fef3c7;
             font-size: 18px;
-            padding: 4px 8px;
-            selection-background-color: rgba(255, 191, 0, 0.4);
+            padding: 0px 4px;
+            selection-background-color: rgba(245, 158, 11, 0.3);
         }
         QLineEdit::placeholder {
-            color: rgba(232, 213, 168, 0.5);
+            color: #8a6a4a;
         }
         QListView {
             background-color: transparent;
             border: none;
-            color: #e8d5a8;
+            color: #fde68a;
             font-size: 15px;
             outline: none;
         }
         QListView::item {
             padding: 10px 12px;
-            border-radius: 12px;
-            margin: 2px 4px;
+            border-radius: 8px;
         }
         QListView::item:hover {
-            /* Translucent amber gloss on hover */
-            background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                stop:0 rgba(255, 215, 100, 0.25),
-                stop:1 rgba(255, 191, 0, 0.08));
-            border: 1px solid rgba(255, 215, 100, 0.3);
+            background-color: rgba(245, 158, 11, 0.08);
         }
         QListView::item:selected {
-            /* Vibrant liquid amber selection fill */
-            background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                stop:0 rgba(255, 215, 100, 0.40),
-                stop:1 rgba(217, 147, 0, 0.25));
-            border: 1px solid rgba(255, 225, 130, 0.5);
-            color: #ffffff;
+            background-color: rgba(245, 158, 11, 0.15);
+            color: #fffbeb;
         }
         QScrollBar:vertical {
             background: transparent;
@@ -209,32 +208,251 @@ private:
             margin: 0px;
         }
         QScrollBar::handle:vertical {
-            /* Glassy scrollbar thumb */
-            background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                stop:0 rgba(255, 210, 100, 0.4),
-                stop:1 rgba(255, 191, 0, 0.15));
-            border: 1px solid rgba(255, 215, 100, 0.25);
+            background: rgba(245, 158, 11, 0.2);
             border-radius: 4px;
             min-height: 20px;
         }
         QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
             height: 0px;
         }
-        QScrollBar:horizontal {
+    )";
+    }
+
+    static QString getOceanStyle() {
+        return R"(
+            SpotlightWindow {
+                background: transparent;
+            }
+            #ContainerFrame {
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 rgba(16, 30, 52, 0.92),
+                    stop:0.08 rgba(12, 24, 44, 0.90),
+                    stop:0.5 rgba(8, 16, 32, 0.88),
+                    stop:1 rgba(6, 12, 24, 0.92));
+                border: 1px solid rgba(96, 165, 250, 0.2);
+                border-top: 1px solid rgba(147, 197, 253, 0.35);
+                border-radius: 37px;
+            }
+            QLineEdit {
+                background-color: transparent;
+                border: none;
+                color: #d0e4ff;
+                font-size: 18px;
+                padding: 0px 4px;
+                selection-background-color: rgba(96, 165, 250, 0.3);
+            }
+            QLineEdit::placeholder {
+                color: #5a7a9a;
+            }
+            QListView {
+                background-color: transparent;
+                border: none;
+                color: #b8d4f0;
+                font-size: 15px;
+                outline: none;
+            }
+            QListView::item {
+                padding: 10px 12px;
+                border-radius: 8px;
+            }
+            QListView::item:hover {
+                background-color: rgba(96, 165, 250, 0.08);
+            }
+            QListView::item:selected {
+                background-color: rgba(96, 165, 250, 0.15);
+                color: #e0f0ff;
+            }
+            QScrollBar:vertical {
+                background: transparent;
+                width: 8px;
+                margin: 0px;
+            }
+            QScrollBar::handle:vertical {
+                background: rgba(96, 165, 250, 0.2);
+                border-radius: 4px;
+                min-height: 20px;
+            }
+            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+                height: 0px;
+            }
+        )";
+    }
+
+    static QString getRoseStyle() {
+        return R"(
+        SpotlightWindow {
+            background: transparent;
+        }
+        #ContainerFrame {
+            background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                stop:0 rgba(52, 16, 32, 0.92),
+                stop:0.08 rgba(40, 12, 24, 0.90),
+                stop:0.5 rgba(26, 8, 16, 0.88),
+                stop:1 rgba(18, 6, 12, 0.92));
+            border: 1px solid rgba(249, 115, 155, 0.2);
+            border-top: 1px solid rgba(253, 186, 206, 0.35);
+            border-radius: 37px;
+        }
+        QLineEdit {
+            background-color: transparent;
+            border: none;
+            color: #f5dce8;
+            font-size: 18px;
+            padding: 0px 4px;
+            selection-background-color: rgba(249, 115, 155, 0.3);
+        }
+        QLineEdit::placeholder {
+            color: #8a5a6a;
+        }
+        QListView {
+            background-color: transparent;
+            border: none;
+            color: #e8b8c8;
+            font-size: 15px;
+            outline: none;
+        }
+        QListView::item {
+            padding: 10px 12px;
+            border-radius: 8px;
+        }
+        QListView::item:hover {
+            background-color: rgba(249, 115, 155, 0.08);
+        }
+        QListView::item:selected {
+            background-color: rgba(249, 115, 155, 0.15);
+            color: #ffe8f0;
+        }
+        QScrollBar:vertical {
             background: transparent;
             width: 8px;
             margin: 0px;
         }
-        QScrollBar::handle:horizontal {
-            /* Glassy scrollbar thumb */
-            background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                stop:0 rgba(255, 210, 100, 0.4),
-                stop:1 rgba(255, 191, 0, 0.15));
-            border: 1px solid rgba(255, 215, 100, 0.25);
+        QScrollBar::handle:vertical {
+            background: rgba(249, 115, 155, 0.2);
             border-radius: 4px;
             min-height: 20px;
         }
-        QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {
+        QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+            height: 0px;
+        }
+    )";
+    }
+
+    static QString getMidnightStyle() {
+        return R"(
+        SpotlightWindow {
+            background: transparent;
+        }
+        #ContainerFrame {
+            background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                stop:0 rgba(24, 18, 48, 0.92),
+                stop:0.08 rgba(18, 14, 38, 0.90),
+                stop:0.5 rgba(12, 10, 28, 0.88),
+                stop:1 rgba(8, 6, 20, 0.92));
+            border: 1px solid rgba(139, 92, 246, 0.2);
+            border-top: 1px solid rgba(196, 181, 253, 0.35);
+            border-radius: 37px;
+        }
+        QLineEdit {
+            background-color: transparent;
+            border: none;
+            color: #e0d4f5;
+            font-size: 18px;
+            padding: 0px 4px;
+            selection-background-color: rgba(139, 92, 246, 0.3);
+        }
+        QLineEdit::placeholder {
+            color: #6a5a8a;
+        }
+        QListView {
+            background-color: transparent;
+            border: none;
+            color: #c8b8e0;
+            font-size: 15px;
+            outline: none;
+        }
+        QListView::item {
+            padding: 10px 12px;
+            border-radius: 8px;
+        }
+        QListView::item:hover {
+            background-color: rgba(139, 92, 246, 0.08);
+        }
+        QListView::item:selected {
+            background-color: rgba(139, 92, 246, 0.15);
+            color: #f0e8ff;
+        }
+        QScrollBar:vertical {
+            background: transparent;
+            width: 8px;
+            margin: 0px;
+        }
+        QScrollBar::handle:vertical {
+            background: rgba(139, 92, 246, 0.2);
+            border-radius: 4px;
+            min-height: 20px;
+        }
+        QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+            height: 0px;
+        }
+    )";
+    }
+
+    static QString getForestStyle() {
+        return R"(
+        SpotlightWindow {
+            background: transparent;
+        }
+        #ContainerFrame {
+            background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                stop:0 rgba(14, 36, 22, 0.92),
+                stop:0.08 rgba(10, 28, 16, 0.90),
+                stop:0.5 rgba(6, 20, 12, 0.88),
+                stop:1 rgba(4, 14, 8, 0.92));
+            border: 1px solid rgba(34, 197, 94, 0.2);
+            border-top: 1px solid rgba(134, 239, 172, 0.35);
+            border-radius: 37px;
+        }
+        QLineEdit {
+            background-color: transparent;
+            border: none;
+            color: #d4f0dc;
+            font-size: 18px;
+            padding: 0px 4px;
+            selection-background-color: rgba(34, 197, 94, 0.3);
+        }
+        QLineEdit::placeholder {
+            color: #5a8a6a;
+        }
+        QListView {
+            background-color: transparent;
+            border: none;
+            color: #b8e0c8;
+            font-size: 15px;
+            outline: none;
+        }
+        QListView::item {
+            padding: 10px 12px;
+            border-radius: 8px;
+        }
+        QListView::item:hover {
+            background-color: rgba(34, 197, 94, 0.08);
+        }
+        QListView::item:selected {
+            background-color: rgba(34, 197, 94, 0.15);
+            color: #e8fff0;
+        }
+        QScrollBar:vertical {
+            background: transparent;
+            width: 8px;
+            margin: 0px;
+        }
+        QScrollBar::handle:vertical {
+            background: rgba(34, 197, 94, 0.2);
+            border-radius: 4px;
+            min-height: 20px;
+        }
+        QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
             height: 0px;
         }
     )";

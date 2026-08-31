@@ -15,9 +15,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-
 #include <QApplication>
-#include <QWidget>        // Added to fix QWidget parameter errors
+#include <QWidget>
 #include <QLocalServer>
 #include <QLocalSocket>
 #include <QSettings>
@@ -32,23 +31,18 @@ int main(int argc, char *argv[]) {
 
     QApplication app(argc, argv);
 
-    // Unique server key for single instance locking
     const QString serverName = "SpotlightApp_SingleInstance_Lock";
 
-    // 1. Try connecting to an existing running instance
     QLocalSocket socket;
     socket.connectToServer(serverName);
 
     if (socket.waitForConnected(500)) {
-        // An instance is ALREADY running! Send a message to wake it up, then exit immediately.
         socket.write("TOGGLE");
         socket.waitForBytesWritten(1000);
         socket.disconnectFromServer();
-        return 0; // Kills this extra process before it creates a window
+        return 0;
     }
 
-    // 2. No instance was found running. We are the main primary process!
-    // Clean up any old leftover sockets from previous crashes
     QLocalServer::removeServer(serverName);
 
     QLocalServer server;
@@ -70,7 +64,6 @@ int main(int argc, char *argv[]) {
     spotlight.raise();
     spotlight.activateWindow();
 
-    // 3. Listen for future launch attempts and toggle visibility when they connect
     QObject::connect(&server, &QLocalServer::newConnection, [&server, &spotlight]() {
         QLocalSocket *clientConnection = server.nextPendingConnection();
         if (clientConnection) {

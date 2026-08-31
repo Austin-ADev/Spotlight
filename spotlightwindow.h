@@ -34,7 +34,7 @@ class SpotlightWindow : public QWidget {
 public:
     explicit SpotlightWindow(QWidget *parent = nullptr);
     void toggleVisibility();
-    void centerOnScreen(); // Moved to public so main.cpp can call it
+    void centerOnScreen();
 
 public slots:
     void setTheme(const QString &themeName);
@@ -42,7 +42,10 @@ public slots:
 protected:
     void paintEvent(QPaintEvent *event) override;
     void keyPressEvent(QKeyEvent *event) override;
-    void focusOutEvent(QFocusEvent *event) override;
+    void changeEvent(QEvent *event) override;
+    bool eventFilter(QObject *watched, QEvent *event) override;
+    void showEvent(QShowEvent *event) override;
+    void hideEvent(QHideEvent *event) override;
 
 private slots:
     void onSearchTextChanged(const QString &text);

@@ -23,44 +23,36 @@
 #include <QStyleOption>
 #include <QPainter>
 #include <QStyle>
+#include <QEvent>
+#include <QMouseEvent>
 
 SpotlightWindow::SpotlightWindow(QWidget *parent)
     : QWidget(parent), searchEngine(this)
 {
-    // Make window borderless, floating, translucent, and hidden from taskbar
-    setWindowFlags(Qt::FramelessWindowHint | Qt::Tool | Qt::WindowStaysOnTopHint);
+    // Use Qt::ToolTip or Qt::Window to ensure X11 accepts window focus state properly
+    setWindowFlags(Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint | Qt::Tool);
     setAttribute(Qt::WA_TranslucentBackground);
 
-    // Outer layout with zero margins
     outerLayout = new QVBoxLayout(this);
     outerLayout->setContentsMargins(0, 0, 0, 0);
-
-    // CRITICAL: Forces window to auto-shrink to visible children size
     outerLayout->setSizeConstraint(QLayout::SetFixedSize);
 
-    // Inner Container Frame
     containerFrame = new QFrame(this);
     containerFrame->setObjectName("ContainerFrame");
-    containerFrame->setFixedWidth(650); // Set width on container frame instead of top widget
+    containerFrame->setFixedWidth(650);
     outerLayout->addWidget(containerFrame);
 
-    // Layout inside container
     innerLayout = new QVBoxLayout(containerFrame);
     innerLayout->setContentsMargins(16, 16, 16, 16);
     innerLayout->setSpacing(12);
 
-    // Search Input Bar
     searchBar = new QLineEdit(containerFrame);
     searchBar->setPlaceholderText("Search apps, files, and actions");
     searchBar->setFixedHeight(40);
-    searchBar->setFocus();
     innerLayout->addWidget(searchBar);
 
-    // Results List View & Model
     resultsList = new QListView(containerFrame);
     resultsList->setFixedHeight(200);
-
-    // Ignore list geometry allocations when hidden
     resultsList->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Ignored);
 
     resultsModel = new QStringListModel(this);
@@ -69,7 +61,6 @@ SpotlightWindow::SpotlightWindow(QWidget *parent)
 
     innerLayout->addWidget(resultsList);
 
-    // Connect text updates and result selections
     connect(searchBar, &QLineEdit::textChanged, this, &SpotlightWindow::onSearchTextChanged);
     connect(searchBar, &QLineEdit::returnPressed, this, [this]() {
         QModelIndex topIndex = resultsModel->index(0, 0);
@@ -78,6 +69,35 @@ SpotlightWindow::SpotlightWindow(QWidget *parent)
         }
     });
     connect(resultsList, &QListView::activated, this, &SpotlightWindow::onResultActivated);
+}
+
+void SpotlightWindow::showEvent(QShowEvent *event) {
+    QWidget::showEvent(event);
+    qApp->installEventFilter(this);
+}
+
+void SpotlightWindow::hideEvent(QHideEvent *event) {
+    QWidget::hideEvent(event);
+    qApp->removeEventFilter(this);
+}
+
+bool SpotlightWindow::eventFilter(QObject *watched, QEvent *event) {
+    // Intercept mouse clicks anywhere in the app/screen
+    if (event->type() == QEvent::MouseButtonPress) {
+        QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(event);
+        // Check if the click happened outside this window's geometry
+        if (!geometry().contains(mouseEvent->globalPosition().toPoint())) {
+            hide();
+            return true; // Consume the event
+        }
+    }
+
+    // Intercept loss of window focus
+    if (event->type() == QEvent::ApplicationDeactivate || event->type() == QEvent::WindowDeactivate) {
+        hide();
+    }
+
+    return QWidget::eventFilter(watched, event);
 }
 
 void SpotlightWindow::setTheme(const QString &themeName) {
@@ -101,7 +121,6 @@ void SpotlightWindow::toggleVisibility() {
 }
 
 void SpotlightWindow::centerOnScreen() {
-    // Get the screen where the mouse cursor currently sits
     QScreen *targetScreen = QGuiApplication::screenAt(QCursor::pos());
     if (!targetScreen) {
         targetScreen = QGuiApplication::primaryScreen();
@@ -110,11 +129,7 @@ void SpotlightWindow::centerOnScreen() {
     if (!targetScreen) return;
 
     QRect screenGeometry = targetScreen->availableGeometry();
-
-    // Horizontally centered
     int x = screenGeometry.x() + (screenGeometry.width() - width()) / 2;
-
-    // Position vertically at ~25% from the top of the available screen area (macOS style)
     int y = screenGeometry.y() + static_cast<int>(screenGeometry.height() * 0.25);
 
     move(x, y);
@@ -140,6 +155,15 @@ void SpotlightWindow::keyPressEvent(QKeyEvent *event) {
     }
 }
 
+void SpotlightWindow::changeEvent(QEvent *event) {
+    if (event->type() == QEvent::ActivationChange) {
+        if (!isActiveWindow() && isVisible()) {
+            hide();
+        }
+    }
+    QWidget::changeEvent(event);
+}
+
 void SpotlightWindow::onSearchTextChanged(const QString &text) {
     if (text.trimmed().isEmpty()) {
         resultsList->hide();
@@ -154,20 +178,11 @@ void SpotlightWindow::onSearchTextChanged(const QString &text) {
         }
     }
 
-    // Keep top edge fixed at 25% height while window resizes downwards
     centerOnScreen();
 }
 
 void SpotlightWindow::onResultActivated(const QModelIndex &index) {
     QString selectedResult = resultsModel->data(index, Qt::DisplayRole).toString();
-
     searchEngine.executeAction(selectedResult);
-
-    hide();
-}
-void SpotlightWindow::focusOutEvent(QFocusEvent *event) {
-    QWidget::focusOutEvent(event);
-
-    // Hide the window when focus is lost instead of killing the application process
     hide();
 }

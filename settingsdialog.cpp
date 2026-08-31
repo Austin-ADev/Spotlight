@@ -47,20 +47,22 @@ SettingsDialog::SettingsDialog(QWidget *parent)
     QHBoxLayout *themeLayout = new QHBoxLayout();
     QLabel *themeLabel = new QLabel("App Theme:", this);
     m_themeComboBox = new QComboBox(this);
-    m_themeComboBox->addItems({"Dark", "Light", "Amber"});
+    m_themeComboBox->addItems({"Dark", "Light", "Amber", "Ocean", "Rose", "Midnight", "Forest"});
 
-    // 1. BLOCK SIGNALS while setting default value so it doesn't fire before signals are connected
-    m_themeComboBox->blockSignals(true);
+    // Load saved theme
     QSettings configSettings("SpotlightApp", "Config");
     QString savedTheme = configSettings.value("theme", "Dark").toString();
+
+    m_themeComboBox->blockSignals(true);
     m_themeComboBox->setCurrentText(savedTheme);
     m_themeComboBox->blockSignals(false);
+
+    // FIX: Apply the loaded theme immediately on creation
+    onThemeComboChanged(savedTheme);
 
     themeLayout->addWidget(themeLabel);
     themeLayout->addWidget(m_themeComboBox);
     mainLayout->addLayout(themeLayout);
-
-    connect(m_themeComboBox, &QComboBox::currentTextChanged, this, &SettingsDialog::onThemeComboChanged);
 
     // Search Options
     bool searchCmds = configSettings.value("searchCommands", true).toBool();

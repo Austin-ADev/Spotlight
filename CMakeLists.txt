@@ -12,7 +12,7 @@ qt_add_executable(Spotlight
     spotlightwindow.h
     searchengine.h searchengine.cpp
     settingsdialog.h settingsdialog.cpp
-    Spotlight.md
+
     fileindexer.h fileindexer.cpp
     styles.h
 )
